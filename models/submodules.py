@@ -27,7 +27,7 @@ class unetUp(nn.Module):
                 nn.ConvTranspose2d(in_size, out_size, kernel_size=2, stride=2, padding=0)
             )
         else:
-            self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+            self.up = nn.UpsamplingBilinear2d(scale_factor=2) #上采样层
             in_size = int(in_size * 1.5)
 
         self.conv = nn.Sequential(
@@ -38,7 +38,7 @@ class unetUp(nn.Module):
     def forward(self, inputs1, inputs2):
         outputs2 = self.up(inputs2)
         buttom, right = inputs1.size(2)%2, inputs1.size(3)%2
-        outputs2 = F.pad(outputs2, (0, -right, 0, -buttom))
+        outputs2 = F.pad(outputs2, (0, -right, 0, -buttom)) #如果w是奇数，right 就是 -1，表示裁掉右边 1 列。以此类推
         return self.conv(torch.cat([inputs1, outputs2], 1))
 
 class feature_extraction_conv(nn.Module):
@@ -54,16 +54,16 @@ class feature_extraction_conv(nn.Module):
         inC = nC
         outC = 2*nC
         block0 = self._make_block(inC, outC, nblock)
-        self.block0 = nn.Sequential(downsample_conv, block0)
+        self.block0 = nn.Sequential(downsample_conv, block0) #block == BN-ReLU-Conv2d  ;  block0 == block[1,2]-block[2,2]
 
         nC = 2*nC
         self.blocks = []
         for i in range(2):
-            self.blocks.append(self._make_block((2**i)*nC,  (2**(i+1))*nC, nblock))
+            self.blocks.append(self._make_block((2**i)*nC,  (2**(i+1))*nC, nblock)) #0: block[2,4]-block[4,4] ; 1: block[4,8]-block[8,8]
 
         self.upblocks = []
         for i in reversed(range(2)):
-            self.upblocks.append(unetUp(nC*2**(i+1), nC*2**i, False))
+            self.upblocks.append(unetUp(nC*2**(i+1), nC*2**i, False)) #上采样模块
 
         self.blocks = nn.ModuleList(self.blocks)
         self.upblocks = nn.ModuleList(self.upblocks)

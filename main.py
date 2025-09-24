@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description='AnyNet with Flyingthings3d')
 parser.add_argument('--maxdisp', type=int, default=192, help='maxium disparity')
 parser.add_argument('--loss_weights', type=float, nargs='+', default=[0.25, 0.5, 1., 1.])
 parser.add_argument('--maxdisplist', type=int, nargs='+', default=[12, 3, 3])
-parser.add_argument('--datapath', default='dataset/',
+parser.add_argument('--datapath', default='/home/liqi/Code/Scene_Flow_Datasets/',
                     help='datapath')
 parser.add_argument('--epochs', type=int, default=10,
                     help='number of epochs to train')
@@ -29,9 +29,8 @@ parser.add_argument('--save_path', type=str, default='results/pretrained_anynet'
                     help='the path of saving checkpoints and log')
 parser.add_argument('--resume', type=str, default=None,
                     help='resume path')
-parser.add_argument('--lr', type=float, default=5e-4,
-                    help='learning rate')
-parser.add_argument('--with_spn', action='store_true', help='with spn network or not')
+parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
+parser.add_argument('--with_spn', type=bool, default=True, help='with spn network or not')
 parser.add_argument('--print_freq', type=int, default=5, help='print frequence')
 parser.add_argument('--init_channels', type=int, default=1, help='initial channels for 2d feature extractor')
 parser.add_argument('--nblocks', type=int, default=2, help='number of layers in each stage')
@@ -64,8 +63,8 @@ def main():
     for key, value in sorted(vars(args).items()):
         log.info(str(key) + ': ' + str(value))
 
-    model = models.anynet.AnyNet(args)
-    model = nn.DataParallel(model).cuda()
+    model = models.anynet.AnyNet(args).cuda()
+    # model = nn.DataParallel(model).cuda()
     optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999))
     log.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
@@ -100,7 +99,6 @@ def main():
 
     test(TestImgLoader, model, log)
     log.info('full training time = {:.2f} Hours'.format((time.time() - start_full_time) / 3600))
-
 
 def train(dataloader, model, optimizer, log, epoch=0):
 
